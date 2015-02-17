@@ -19,6 +19,12 @@ The last argument specifies the target JavaScript program to be analysed.
     node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js tests/tiny_tests/test1.js
 ```
 
+### Use SemanticDiff to detect inconsistency on simple JS minimization:
+
+The last argument specifies the target JavaScript program to be analysed.
+```
+./script/genTrace.sh
+```
 
 ### Events to be observed by SemanticDiff
 

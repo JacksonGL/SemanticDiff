@@ -16,6 +16,12 @@
 
 // Author: Liang Gong
 
+// a naive recorder that observe and record every event 
+// during the program execution (the generated file is too large)
+// a smarter trace recorder:
+// only trace operation that change the program state
+
+
 // do not remove the following comment
 // JALANGI DO NOT INSTRUMENT
 
@@ -23,34 +29,19 @@
     function MyAnalysis () {
         var utils = sandbox.Utils;
 
+        this.invokeFunPre = function(iid, f, base, args, isConstructor, isMethod){};
+
         this.invokeFun = function(iid, f, base, args, result, isConstructor, isMethod){
             if (f === utils.CONSOLE_LOG) {
                 console.log('CONSOLE_LOG: ' + args[0]);
             }
         };
 
-        this.putField = function(iid, base, offset, val, isComputed, isOpAssign){
-            if(typeof val !== 'function') {
-                console.log('pf:'+offset+'='+val);
-            }
-        };
-
-        this.write = function(iid, name, val, lhs, isGlobal, isScriptLocal) { 
-            if(isGlobal) {
-                console.log('wg:' + name);
-                console.log('  v:' + val);
-            }
-        };
-
-        /*
-        this.read = function(iid, name, val, isGlobal, isScriptLocal){return {result:val};};
-
-        this.invokeFunPre = function(iid, f, base, args, isConstructor, isMethod){return {f:f,base:base,args:args,skip:false};};
-
         this.literal = function(iid, val, hasGetterSetter) {
         };
 
-        this.forinObject = function(iid, val){return {result:val};};
+        this.forinObject = function(iid, val){
+        };
 
         this.declare = function (iid, name, val, isArgument, argumentIndex, isCatchParam){return {result:val};};
 
@@ -59,6 +50,18 @@
         this.getField = function(iid, base, offset, val, isComputed, isOpAssign, isMethodCall){return {result:val};};
 
         this.putFieldPre = function(iid, base, offset, val, isComputed, isOpAssign){return {base:base,offset:offset,val:val,skip:false};};
+
+        this.putField = function(iid, base, offset, val, isComputed, isOpAssign){return {result:val};};
+
+        this.read = function(iid, name, val, isGlobal, isScriptLocal){return {result:val};};
+
+        this.write = function(iid, name, val, lhs, isGlobal, isScriptLocal) { 
+            if(isGlobal) {
+                console.log('write global: ' + name);
+            } else {
+                console.log('write local:' + name);
+            }
+        };
 
         this._return = function(iid, val){return {result:val};};
 
@@ -87,11 +90,8 @@
         this.instrumentCode = function(iid, newCode, newAst){ return {result:newCode};};
 
         this.endExpression = function(iid) {};
-        */
 
-        this.endExecution = function() {
-            console.log('endE');
-        };
+        this.endExecution = function() {};
 
         /**
          * onReady is useful if your analysis is running on node.js (i.e., via the direct.js or jalangi.js commands)
