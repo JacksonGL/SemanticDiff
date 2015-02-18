@@ -34,6 +34,42 @@
     util = {};
 
     util.CONSOLE_LOG = console.log;
+    util.RANDOM = Math.random;
+    var SPECIAL_PROP = sandbox.Constants.SPECIAL_PROP + "M";
+    var HOP = sandbox.Constants.HOP;
+    var objectId = 1;
+
+    function createShadowObject(val) {
+        var type = typeof val;
+        if ((type === 'object' || type === 'function') && val !== null && !HOP(val, SPECIAL_PROP)) {
+            if (Object && Object.defineProperty && typeof Object.defineProperty === 'function') {
+                Object.defineProperty(val, SPECIAL_PROP, {
+                    enumerable:false,
+                    writable:true
+                });
+            }
+            try {
+                val[SPECIAL_PROP] = Object.create(null);
+                val[SPECIAL_PROP][SPECIAL_PROP] = objectId;
+                objectId = objectId + 2;
+            } catch (e) {
+                // cannot attach special field in some DOM Objects.  So ignore them.
+            }
+        }
+
+    }
+
+    sandbox.getShadowObject = function (val) {
+        var value;
+        createShadowObject(val);
+        var type = typeof val;
+        if ((type === 'object' || type === 'function') && val !== null && HOP(val, SPECIAL_PROP)) {
+            value = val[SPECIAL_PROP];
+        } else {
+            value = undefined;
+        }
+        return value;
+    };
     
     sandbox.Utils = util;
 })(J$));

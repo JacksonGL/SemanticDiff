@@ -34,3 +34,12 @@ The last argument specifies the target JavaScript program to be analysed.
  * ajax
  * alert
  * modify dom
+
+
+### Things that could make minimization to go wrong
+
+ * use of ```eval```
+ * statement without semicolon at the end
+
+
+Also need to handle the ```math.random``` function

@@ -19,26 +19,99 @@
 // do not remove the following comment
 // JALANGI DO NOT INSTRUMENT
 
-(function (sandbox) {
-    function MyAnalysis () {
+(function(sandbox) {
+    function MyAnalysis() {
         var utils = sandbox.Utils;
 
-        this.invokeFun = function(iid, f, base, args, result, isConstructor, isMethod){
+        var objId = 1;
+        var randomValue = 0.5;
+
+        function setObjectId(val) {
+            if(typeof val === 'object' || typeof val === 'function') {
+                var sobj = sandbox.getShadowObject(val);
+                // try to set obj Id
+                if (sobj) {
+                    if (!(sobj.id)) {
+                        sobj.id = objId++;
+                        // check if id has been successfully set
+                        sobj = sandbox.getShadowObject(val);
+                        // if object id is not succesuflly set
+                        if(!(sobj && sobj.id === (objId-1))) {
+                            objId--;
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function getLocation(iid) {
+            return sandbox.iidToLocation(sandbox.getGlobalIID(iid));
+        }
+
+        this.invokeFun = function(iid, f, base, args, result, isConstructor, isMethod) {
             if (f === utils.CONSOLE_LOG) {
                 console.log('CONSOLE_LOG: ' + args[0]);
             }
+
+            if (f === utils.RANDOM) {
+                result = randomValue;
+            }
+
+            var set = true;
+            if (isConstructor) {
+                set = setObjectId(result);
+            }
+            //if(!set)
+            //console.log(getLocation(iid));
+            return {result: result};
         };
 
-        this.putField = function(iid, base, offset, val, isComputed, isOpAssign){
-            if(typeof val !== 'function') {
-                console.log('pf:'+offset+'='+val);
+        this.literal = function(iid, val, hasGetterSetter) {
+            var set = true;
+            set = setObjectId(val);
+            //if(!set)
+            //console.log(getLocation(iid));
+        };
+
+        function getVal(val) {
+            if (typeof val === 'string') {
+                var sample = '';
+                var sampleInterval = ((val.length / 10) | 0) + 1;
+                // console.log(sampleInterval);
+                if (val.length > 20) {
+                    for (var i = 0; i < val.length; i += sampleInterval) {
+                        sample = sample + val[i];
+                    }
+                    return sample;
+                } else {
+                    return val;
+                }
+            } else {
+                var sobj = sandbox.getShadowObject(val);
+                if (sobj) {
+                    if (sobj.id) {
+                        return '[obj-' + sobj.id + ']';
+                    }
+                }
+                if (typeof val === 'number') {
+                    return val;
+                }
+                return typeof val;
+            }
+        }
+
+        this.putField = function(iid, base, offset, val, isComputed, isOpAssign) {
+            if (typeof val !== 'function') {
+                console.log('pf:' + offset + '=' + getVal(val));
             }
         };
 
-        this.write = function(iid, name, val, lhs, isGlobal, isScriptLocal) { 
-            if(isGlobal) {
+        this.write = function(iid, name, val, lhs, isGlobal, isScriptLocal) {
+            if (isGlobal) {
                 console.log('wg:' + name);
-                console.log('  v:' + val);
+                console.log('  v:' + getVal(val));
             }
         };
 
@@ -47,8 +120,7 @@
 
         this.invokeFunPre = function(iid, f, base, args, isConstructor, isMethod){return {f:f,base:base,args:args,skip:false};};
 
-        this.literal = function(iid, val, hasGetterSetter) {
-        };
+        
 
         this.forinObject = function(iid, val){return {result:val};};
 
@@ -103,7 +175,9 @@
          * instrumented program runs there.
          * @param cb
          */
-        this.onReady = function(cb) { cb(); };
+        this.onReady = function(cb) {
+            cb();
+        };
     }
     sandbox.analysis = new MyAnalysis();
 })(J$);

@@ -32,36 +32,46 @@
 # author: Liang Gong (gongliang13@cs.berkeley.edu)
 
 # back up the preivous results
-rm orig_trace.txt;
 mv orig_trace.txt orig_trace.bak.txt;
-rm min_trace.txt;
 mv min_trace.txt min_trace.bak.txt;
-rm simp_trace.txt;
 mv simp_trace.txt simp_trace.bak.txt;
+mv adv_trace.txt adv_trace.bak.txt;
 
-
-# procedure that collects results and timing on one bechmark
+# procedure that collects execution trace on one bechmark
 # f: arg1 -> arg2
 # arg1: name of benchmark
 # arg2: location of benchmark
-runexp() {
+collect() {
     echo "$1"
     echo "collecting trace for original program:" "$1".js 
     # trace the original program
-    node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2".js >> orig_trace.txt
+    node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2".js > orig_trace.txt
 	echo "collecting trace for minified program:" "$1"_min.js 
 	# trace simple minification (remove white spaces)
-	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_min.js >> min_trace.txt
+	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_min.js > min_trace.txt
 	echo "collecting trace for program with simple optimization:" "$1"_simp.js 
 	# trace simple optimization
-	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_simp.js >> simp_trace.txt
+	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_simp.js > simp_trace.txt
+	echo "collecting trace for program with advanced optimization:" "$1"_adv.js 
+	# trace advanced optimization
+	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_adv.js > adv_trace.txt
+	
+	# start differing traces
+	echo "diff original trace and min trace"
+	diff orig_trace.txt min_trace.txt
+	echo "diff original trace and simple opt trace"
+	diff orig_trace.txt simp_trace.txt
+	echo "diff original trace and advanced opt trace"
+	diff orig_trace.txt adv_trace.txt
 }
 
 : <<'END'
 END
 
-# Google Octane
-runexp "test-1" "tests/tiny_tests/test_1"
-# runexp "jquery" "tests/tiny_tests/jquery"
+# tiny tests
+# collect "test-1" "tests/tiny_tests/test_1"
+# collect "earley-boyer" "tests/tiny_tests/earley-boyer"
+collect "jquery" "tests/tiny_tests/jquery"
+# collect "regexp" "tests/tiny_tests/regexp"
 
-echo '[*]exp-done' >> result.txt
+echo 'collecting complete'
