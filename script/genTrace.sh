@@ -31,20 +31,28 @@
 
 # author: Liang Gong (gongliang13@cs.berkeley.edu)
 
-# back up the preivous results
-mv orig_trace.txt orig_trace.bak.txt;
-mv min_trace.txt min_trace.bak.txt;
-mv simp_trace.txt simp_trace.bak.txt;
-mv adv_trace.txt adv_trace.bak.txt;
+# procedure that compiles the benchmark programs
+# f: arg1 -> arg2 : Unit
+# arg1: name of benchmark
+# arg2: location of benchmark
+compile() {
+	echo "compiling" "$1".js " with WHITESPACE_ONLY mode"
+	( java -jar thirdParty/closure/compiler.jar --compilation_level WHITESPACE_ONLY --create_source_map "$2"_min_sourcemap.json --js_output_file "$2"_min.js "$2".js ) 2> "$2"_min_compile_info.txt
+
+	echo "compiling" "$1".js " with SIMPLE mode"
+	( java -jar thirdParty/closure/compiler.jar --compilation_level SIMPLE --create_source_map "$2"_simp_sourcemap.json --js_output_file "$2"_simp.js "$2".js ) 2> "$2"_simp_compile_info.txt
+
+	echo "compiling" "$1".js " with ADVANCED mode"
+	( java -jar thirdParty/closure/compiler.jar --compilation_level ADVANCED --create_source_map "$2"_adv_sourcemap.json --js_output_file "$2"_adv.js "$2".js ) 2> "$2"_adv_compile_info.txt
+}
 
 # procedure that collects execution trace on one bechmark
-# f: arg1 -> arg2
+# f: arg1 -> arg2 : Unit
 # arg1: name of benchmark
 # arg2: location of benchmark
 collect() {
-    echo "$1"
-    echo "collecting trace for original program:" "$1".js 
     # trace the original program
+    echo "collecting trace for program:" "$1".js
     node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2".js > orig_trace.txt
 	echo "collecting trace for minified program:" "$1"_min.js 
 	# trace simple minification (remove white spaces)
@@ -52,26 +60,117 @@ collect() {
 	echo "collecting trace for program with simple optimization:" "$1"_simp.js 
 	# trace simple optimization
 	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_simp.js > simp_trace.txt
-	# echo "collecting trace for program with advanced optimization:" "$1"_adv.js 
+	echo "collecting trace for program with advanced optimization:" "$1"_adv.js 
 	# trace advanced optimization
-	# node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_adv.js > adv_trace.txt
-	
+	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_adv.js > adv_trace.txt
+}
+
+# procedure that collect diff information among traces
+# f: arg1 -> arg2 : Unit
+# arg1: name of benchmark
+# arg2: location of benchmark
+getDiff() {
 	# start differing traces
 	echo "diff original trace and min trace"
-	diff orig_trace.txt min_trace.txt
+	diff orig_trace.txt min_trace.txt > "$2"_min_diff.txt
 	echo "diff original trace and simple opt trace"
-	diff orig_trace.txt simp_trace.txt
-	# echo "diff original trace and advanced opt trace"
-	# diff orig_trace.txt adv_trace.txt
+	diff orig_trace.txt simp_trace.txt > "$2"_simp_diff.txt
+	echo "diff original trace and advanced opt trace"
+	diff orig_trace.txt adv_trace.txt > "$2"_adv_diff.txt
+}
+
+# procedure that saves the result
+# f: arg1 -> arg2 : Unit
+# arg1: name of benchmark
+# arg2: location of benchmark
+save() {
+	mkdir tests/result/"$1"
+	mkdir tests/result/"$1"/orig
+	mkdir tests/result/"$1"/min
+	mkdir tests/result/"$1"/simp
+	mkdir tests/result/"$1"/adv
+	# save original and minified source code
+	cp "$2".js tests/result/"$1"/orig/"$1".js
+	mv "$2"_min.js tests/result/"$1"/min/"$1"_min.js
+	mv "$2"_simp.js tests/result/"$1"/simp/"$1"_simp.js
+	mv "$2"_adv.js tests/result/"$1"/adv/"$1"_adv.js
+	# save compiler message
+	mv "$2"_min_compile_info.txt tests/result/"$1"/min/"$1"_min_compile_info.txt
+	mv "$2"_simp_compile_info.txt tests/result/"$1"/simp/"$1"_simp_compile_info.txt
+	mv "$2"_adv_compile_info.txt tests/result/"$1"/adv/"$1"_adv_compile_info.txt
+	# save instrumented source code
+	mv "$2"_jalangi_.js tests/result/"$1"/orig/"$1"_jalangi_.js
+	mv "$2"_min_jalangi_.js tests/result/"$1"/min/"$1"_min_jalangi_.js
+	mv "$2"_simp_jalangi_.js tests/result/"$1"/simp/"$1"_simp_jalangi_.js
+	mv "$2"_adv_jalangi_.js tests/result/"$1"/adv/"$1"_adv_jalangi_.js
+	# save instrumented source code sourcemap files
+	mv "$2"_jalangi_.json tests/result/"$1"/orig/"$1"_jalangi_.json
+	mv "$2"_min_jalangi_.json tests/result/"$1"/min/"$1"_min_jalangi_.json
+	mv "$2"_simp_jalangi_.json tests/result/"$1"/simp/"$1"_simp_jalangi_.json
+	mv "$2"_adv_jalangi_.json tests/result/"$1"/adv/"$1"_adv_jalangi_.json
+	# save closure compiler sourcemap files
+	mv "$2"_min_sourcemap.json tests/result/"$1"/min/"$1"_min_sourcemap.json
+	mv "$2"_simp_sourcemap.json tests/result/"$1"/simp/"$1"_simp_sourcemap.json
+	mv "$2"_adv_sourcemap.json tests/result/"$1"/adv/"$1"_adv_sourcemap.json
+	# save traces
+	mv ./orig_trace.txt tests/result/"$1"/orig/"$1"_trace.txt
+	mv ./min_trace.txt tests/result/"$1"/min/"$1"_min_trace.txt
+	mv ./simp_trace.txt tests/result/"$1"/simp/"$1"_simp_trace.txt
+	mv ./adv_trace.txt tests/result/"$1"/adv/"$1"_adv_trace.txt
+	# save diff results
+	mv "$2"_min_diff.txt tests/result/"$1"/"$1"_min_diff.txt
+	mv "$2"_simp_diff.txt tests/result/"$1"/"$1"_simp_diff.txt
+	mv "$2"_adv_diff.txt tests/result/"$1"/"$1"_adv_diff.txt
+}
+
+# clean the previous intermediat files before experiment
+clean() {
+	# back up the result
+	rm -Rf tests/result_bak/*
+	rmdir tests/result_bak
+	mv tests/result tests/result_bak
+	mkdir tests/result
+	# back up the preivous results
+	# mv orig_trace.txt orig_trace.bak.txt;
+	# mv min_trace.txt min_trace.bak.txt;
+	# mv simp_trace.txt simp_trace.bak.txt;
+	# mv adv_trace.txt adv_trace.bak.txt;
+	rm orig_trace.txt
+	rm min_trace.txt
+	rm simp_trace.txt
+	rm adv_trace.txt
+	rm tests/tiny_tests/*.json
+	rm tests/tiny_tests/*_jalangi_.js
+	rm tests/tiny_tests/*_min.js
+	rm tests/tiny_tests/*_simp.js
+	rm tests/tiny_tests/*_adv.js
+}
+
+# procedure that do experiment for one bechmark
+# f: arg1 -> arg2 : Unit
+# arg1: name of benchmark
+# arg2: location of benchmark
+run() {
+    echo "$1"
+    # compile the code
+    compile "$1" "$2"
+    # collect the execution trace
+    collect "$1" "$2"
+    # collect the diff information of the results
+	getDiff "$1" "$2"
+	# save the results
+	save "$1" "$2"
 }
 
 : <<'END'
 END
 
-# tiny tests
-# collect "test-1" "tests/tiny_tests/test_1"
-collect "earley-boyer" "tests/tiny_tests/earley-boyer"
-# collect "jquery" "tests/tiny_tests/jquery"
-# collect "regexp" "tests/tiny_tests/regexp"
+# first do some cleaning
+clean
 
-echo 'collecting complete'
+# tiny tests
+run "test_1" "tests/tiny_tests/test_1"
+run "earley-boyer" "tests/tiny_tests/earley-boyer"
+run "regexp" "tests/tiny_tests/regexp"
+
+echo 'data collecting complete'

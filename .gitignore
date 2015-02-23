@@ -1,3 +1,5 @@
 tests/tiny_tests/*_jalangi_.js
 tests/tiny_tests/*_jalangi_.json
 *.txt
+tests/result/*
+tests/result_bak/*

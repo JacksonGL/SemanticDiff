@@ -26,6 +26,19 @@ The last argument specifies the target JavaScript program to be analysed.
 ./script/genTrace.sh
 ```
 
+### Use of the Google Closure Compiler
+
+```
+java -jar thirdParty/closure/compiler.jar --compilation_level WHITESPACE_ONLY --js_output_file tests/tiny_tests/regexp_min.js tests/tiny_tests/regexp.js
+```
+
+### Useful Resources
+
+Debugging JavaScript with SourceMap
+
+  https://developer.chrome.com/devtools/docs/javascript-debugging
+
+
 ### Events to be observed by SemanticDiff
 
  * write to global variable
