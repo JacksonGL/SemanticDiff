@@ -52,17 +52,17 @@ collect() {
 	echo "collecting trace for program with simple optimization:" "$1"_simp.js 
 	# trace simple optimization
 	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_simp.js > simp_trace.txt
-	echo "collecting trace for program with advanced optimization:" "$1"_adv.js 
+	# echo "collecting trace for program with advanced optimization:" "$1"_adv.js 
 	# trace advanced optimization
-	node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_adv.js > adv_trace.txt
+	# node ../jalangi2/src/js/commands/jalangi.js --inlineIID --inlineSource --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_adv.js > adv_trace.txt
 	
 	# start differing traces
 	echo "diff original trace and min trace"
 	diff orig_trace.txt min_trace.txt
 	echo "diff original trace and simple opt trace"
 	diff orig_trace.txt simp_trace.txt
-	echo "diff original trace and advanced opt trace"
-	diff orig_trace.txt adv_trace.txt
+	# echo "diff original trace and advanced opt trace"
+	# diff orig_trace.txt adv_trace.txt
 }
 
 : <<'END'
@@ -70,8 +70,8 @@ END
 
 # tiny tests
 # collect "test-1" "tests/tiny_tests/test_1"
-# collect "earley-boyer" "tests/tiny_tests/earley-boyer"
-collect "jquery" "tests/tiny_tests/jquery"
+collect "earley-boyer" "tests/tiny_tests/earley-boyer"
+# collect "jquery" "tests/tiny_tests/jquery"
 # collect "regexp" "tests/tiny_tests/regexp"
 
 echo 'collecting complete'

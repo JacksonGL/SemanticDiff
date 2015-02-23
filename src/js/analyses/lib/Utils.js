@@ -27,8 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- // Author: Liang Gong (gongliang13@cs.berkeley.edu)
-
+// Author: Liang Gong (gongliang13@cs.berkeley.edu)
 
 ((function(sandbox) {
     util = {};
@@ -44,8 +43,8 @@
         if ((type === 'object' || type === 'function') && val !== null && !HOP(val, SPECIAL_PROP)) {
             if (Object && Object.defineProperty && typeof Object.defineProperty === 'function') {
                 Object.defineProperty(val, SPECIAL_PROP, {
-                    enumerable:false,
-                    writable:true
+                    enumerable: false,
+                    writable: true
                 });
             }
             try {
@@ -59,7 +58,7 @@
 
     }
 
-    sandbox.getShadowObject = function (val) {
+    sandbox.getShadowObject = function(val) {
         var value;
         createShadowObject(val);
         var type = typeof val;
@@ -70,6 +69,61 @@
         }
         return value;
     };
-    
+
+    // return true if the parameter is a native function
+    util.isNativeFun = function(f) {
+        if (typeof f === 'function') {
+            var str = f.toString();
+            if (str.indexOf('{ [native code] }') >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    var funList = [Object, Array, Boolean, Number];
+
+    util.isImportantNativeFun = function(f) {
+        for (var i = 0; i < funList.length; i++) {
+            if (funList[i] === f) {
+                return false;
+            }
+        }
+        return this.isNativeFun(f);
+    }
+
+    // a stringify object that handles circular references
+    util.stringify = function(obj) {
+        var objBuffer = [];
+
+        function handler(key, value) {
+            if (key === 'code' && typeof value === 'string') {
+                return '[content skipped]';
+            }
+            if (key === 'J$') {
+                return '[jalangi content skipped]';
+            }
+            if (key === 'pid') {
+                return '[pid skipped]';
+            }
+            if (key === 'filename' && typeof value === 'string') {
+                return '[file name skipped]';
+            }
+            if (key === 'argv' && typeof value === 'object' && Array.isArray(value)) {
+                return '[argv skipped]';
+            }
+            if (typeof value === 'object' || typeof value === 'function') {
+                for (var i = 0; i < objBuffer.length; i++) {
+                    if (objBuffer[i] === value) {
+                        // circular
+                        return 'circular-' + i;
+                    }
+                }
+                objBuffer.push(value);
+            }
+            return value;
+        }
+        return JSON.stringify(obj, handler, 2);
+    };
     sandbox.Utils = util;
 })(J$));

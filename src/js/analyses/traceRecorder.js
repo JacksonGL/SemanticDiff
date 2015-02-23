@@ -65,6 +65,15 @@
             }
             //if(!set)
             //console.log(getLocation(iid));
+
+            if (utils.isImportantNativeFun(f)) {
+                console.log('fun-name:' + f.name);
+                console.log('args:');
+                console.log(utils.stringify(args));
+                console.log('result:');
+                console.log(utils.stringify(result));
+                console.log(utils.stringify(global));
+            }
             return {result: result};
         };
 
@@ -102,9 +111,17 @@
             }
         }
 
+        var sampleCnt = 5000;
+
         this.putField = function(iid, base, offset, val, isComputed, isOpAssign) {
             if (typeof val !== 'function') {
                 console.log('pf:' + offset + '=' + getVal(val));
+            }
+            if(sampleCnt-- <= 0)
+                console.log(utils.stringify(global));
+                //console.log(global);
+            if(sampleCnt <= 0) {
+                sampleCnt = 5000;
             }
         };
 
@@ -112,7 +129,9 @@
             if (isGlobal) {
                 console.log('wg:' + name);
                 console.log('  v:' + getVal(val));
-            }
+                console.log(utils.stringify(global));
+                //console.log(global);
+            }   
         };
 
         /*
@@ -162,6 +181,7 @@
         */
 
         this.endExecution = function() {
+            console.log(utils.stringify(global));
             console.log('endE');
         };
 
