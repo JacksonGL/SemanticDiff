@@ -169,8 +169,9 @@ END
 clean
 
 # tiny tests
-run "test_1" "tests/tiny_tests/test_1"
-run "earley-boyer" "tests/tiny_tests/earley-boyer"
-run "regexp" "tests/tiny_tests/regexp"
+# run "test_1" "tests/tiny_tests/test_1"
+run "test_2" "tests/tiny_tests/test_2"
+# run "earley-boyer" "tests/tiny_tests/earley-boyer"
+# run "regexp" "tests/tiny_tests/regexp"
 
 echo 'data collecting complete'
