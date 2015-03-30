@@ -27,7 +27,7 @@
         var randomValue = 0.5;
 
         function setObjectId(val) {
-            if(typeof val === 'object' || typeof val === 'function') {
+            if (typeof val === 'object' || typeof val === 'function') {
                 var sobj = sandbox.getShadowObject(val);
                 // try to set obj Id
                 if (sobj) {
@@ -36,7 +36,7 @@
                         // check if id has been successfully set
                         sobj = sandbox.getShadowObject(val);
                         // if object id is not succesuflly set
-                        if(!(sobj && sobj.id === (objId-1))) {
+                        if (!(sobj && sobj.id === (objId - 1))) {
                             objId--;
                         }
                         return false;
@@ -49,6 +49,9 @@
         function getLocation(iid) {
             return sandbox.iidToLocation(sandbox.getGlobalIID(iid));
         }
+
+        var nativeFunSamplingCnt = 0;
+        var interval = 1;
 
         this.invokeFun = function(iid, f, base, args, result, isConstructor, isMethod) {
             if (f === utils.CONSOLE_LOG) {
@@ -67,14 +70,28 @@
             //console.log(getLocation(iid));
 
             if (utils.isImportantNativeFun(f)) {
-                console.log('fun-name:' + f.name);
-                console.log('args:');
-                console.log(utils.stringify(args));
-                console.log('result:');
-                console.log(utils.stringify(result));
-                console.log(utils.stringify(global));
+                if(f === Function.apply || f === Function.call) {
+                    if(!utils.isImportantNativeFun(args[0]))
+                        return {
+                            result: result
+                        };
+                }
+                //if ((--interval) <= 0) {
+                //    nativeFunSamplingCnt++;
+                //    interval = (Math.pow(1.1, nativeFunSamplingCnt) | 0);
+                    // sample the current function invocation
+                    // and the current program global state
+                    console.log('fun-name:' + f.name);
+                    console.log('args:');
+                    console.log(utils.hash(args));
+                    console.log('result:');
+                    console.log(utils.hash(result));
+                    console.log('gs: ' + utils.hash(global));
+                //}
             }
-            return {result: result};
+            return {
+                result: result
+            };
         };
 
         this.literal = function(iid, val, hasGetterSetter) {
@@ -111,27 +128,27 @@
             }
         }
 
-        var sampleCnt = 5000;
+        //var sampleCnt = 5000;
 
         this.putField = function(iid, base, offset, val, isComputed, isOpAssign) {
-            if (typeof val !== 'function') {
-                console.log('pf:' + offset + '=' + getVal(val));
-            }
-            if(sampleCnt-- <= 0)
-                console.log(utils.stringify(global));
-                //console.log(global);
-            if(sampleCnt <= 0) {
-                sampleCnt = 5000;
-            }
+            //if (typeof val !== 'function') {
+            //    console.log('pf:' + offset + '=' + getVal(val));
+            //}
+            //if (sampleCnt-- <= 0)
+            //    console.log(utils.hash(global));
+            //console.log(global);
+            //if (sampleCnt <= 0) {
+            //    sampleCnt = 5000;
+            //}
         };
 
         this.write = function(iid, name, val, lhs, isGlobal, isScriptLocal) {
             if (isGlobal) {
                 console.log('wg:' + name);
                 console.log('  v:' + getVal(val));
-                console.log(utils.stringify(global));
+                console.log(utils.hash(global));
                 //console.log(global);
-            }   
+            }
         };
 
         /*
@@ -181,6 +198,7 @@
         */
 
         this.endExecution = function() {
+            //console.log(utils.hash(global));
             console.log(utils.stringify(global));
             console.log('endE');
         };

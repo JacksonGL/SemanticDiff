@@ -81,7 +81,21 @@
         return false;
     }
 
-    var funList = [Object, Array, Boolean, Number];
+    var funList = [Object, Array, Boolean, Number, RegExp, Date, 
+        Array.prototype.push, Array.prototype.pop, Array.prototype.slice, Array.prototype.join,
+        Array.prototype.shift, Array.prototype.unshift, Array.prototype.concat,
+        String.prototype.charCodeAt, parseInt, parseFloat, Math.max, Math.sin, Math.min, Math.pow, Math.floor,
+        Object.defineProperty, Math.abs, Math.cos, Math.sqrt, Math.round, isNaN,
+        String.fromCharCode, String.prototype.indexOf, String.prototype.charAt,
+        Float32Array, Uint8Array, Uint16Array, Uint32Array, Float64Array, Array.prototype.lastIndexOf, String.prototype.lastIndexOf,
+        String.prototype.substring, String.prototype.trim, Object.create, Object.prototype.hasOwnProperty,
+        Array.prototype.splice, Int8Array, Int16Array, Int32Array, String.prototype.replace,
+        String.prototype.toUpperCase, String.prototype.toLowerCase,
+        RegExp.prototype.exec, ArrayBuffer, Date.now, console.log, 
+        // Array.prototype.split, String.prototype.match, 
+        String.prototype.toLocaleUpperCase, String.prototype.toLocaleLowerCase,
+        JSON.stringify, JSON.parse
+    ];
 
     util.isImportantNativeFun = function(f) {
         for (var i = 0; i < funList.length; i++) {
@@ -90,6 +104,22 @@
             }
         }
         return this.isNativeFun(f);
+    }
+
+    var prim = 1181;
+
+    function simpleHash(str) {
+        str = str + '';
+        var result = 0;
+        for (var i = 0; i < str.length; i += 11) {
+            result += str.charCodeAt(i);
+            result %= prim;
+        }
+        return result;
+    }
+
+    util.hash = function(obj) {
+        return simpleHash(this.stringify(obj));
     }
 
     // a stringify object that handles circular references

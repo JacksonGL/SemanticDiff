@@ -12,6 +12,14 @@ To run SemanticDiff you need to install jalangi2 first.
 See the Jalangi2 Repository here:
 https://github.com/Samsung/jalangi2
 
+### Install some node.js packages:
+
+```
+npm install argparse
+npm install esotope
+npm install jsdom
+```
+
 ### Run SemanticDiff on node.js
 
 The last argument specifies the target JavaScript program to be analysed.
@@ -54,5 +62,5 @@ Debugging JavaScript with SourceMap
  * use of ```eval```
  * statement without semicolon at the end
 
-
 Also need to handle the ```math.random``` function
+
