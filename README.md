@@ -18,6 +18,8 @@ https://github.com/Samsung/jalangi2
 npm install argparse
 npm install esotope
 npm install jsdom
+npm install phantom
+npm install phantomjs -g
 ```
 
 ### Run SemanticDiff on node.js

@@ -25,6 +25,7 @@
 
         var objId = 1;
         var randomValue = 0.5;
+        var fixedDateTick = 1000000000000;
 
         function setObjectId(val) {
             if (typeof val === 'object' || typeof val === 'function') {
@@ -62,6 +63,15 @@
                 result = randomValue;
             }
 
+            if (f === utils.DATE) {
+                result = new Date();
+                result.setTime(fixedDateTick);
+            }
+
+            if (f === utils.NOW) {
+                result = fixedDateTick
+            }
+
             var set = true;
             if (isConstructor) {
                 set = setObjectId(result);
@@ -70,8 +80,8 @@
             //console.log(getLocation(iid));
 
             if (utils.isImportantNativeFun(f)) {
-                if(f === Function.apply || f === Function.call) {
-                    if(!utils.isImportantNativeFun(args[0]))
+                if (f === Function.apply || f === Function.call) {
+                    if (!utils.isImportantNativeFun(args[0]))
                         return {
                             result: result
                         };
@@ -79,15 +89,25 @@
                 //if ((--interval) <= 0) {
                 //    nativeFunSamplingCnt++;
                 //    interval = (Math.pow(1.1, nativeFunSamplingCnt) | 0);
-                    // sample the current function invocation
-                    // and the current program global state
-                    console.log('fun-name:' + f.name);
-                    console.log('args:');
-                    console.log(utils.hash(args));
-                    console.log('result:');
-                    console.log(utils.hash(result));
-                    console.log('gs: ' + utils.hash(global));
+                // sample the current function invocation
+                // and the current program global state
+                console.log('fun-name:' + utils.getFunName(f));
+                console.log('args:');
+                //console.log(args);
+                console.log(utils.hash(args));
+                console.log('result:');
+                //console.log(result);
+                //console.log(getLocation(iid));
+                console.log(utils.hash(result));
+                console.log('gs: ' + utils.hash(global));
                 //}
+            } else if (isMarkedDOMElement(f) || utils.isDOMElement(f) || utils.isDOMElement(base)) {
+                console.log(utils.getFunName(base.constructor) + '.' + utils.getFunName(f));
+                console.log('args:');
+                console.log(utils.hash(args));
+                console.log('result:');
+                console.log(utils.hash(result));
+                console.log('gs: ' + utils.hash(global));
             }
             return {
                 result: result
@@ -140,6 +160,13 @@
             //if (sampleCnt <= 0) {
             //    sampleCnt = 5000;
             //}
+
+            if (utils.isDOMElement(base)) {
+                console.log('pf');
+                console.log(utils.getFunName(base.constructor));
+                console.log(offset);
+                console.log(utils.hash(val));
+            }
         };
 
         this.write = function(iid, name, val, lhs, isGlobal, isScriptLocal) {
@@ -151,12 +178,31 @@
             }
         };
 
+        function isMarkedDOMElement(elem) {
+            var sobj = sandbox.getShadowObject(elem);
+            if (sobj) {return sobj.isDOMElement;}
+            return false;
+        }
+
+        this.getField = function(iid, base, offset, val, isComputed, isOpAssign, isMethodCall) {
+            if (utils.isDOMElement(base) || isMarkedDOMElement(base)) {
+                // mark the object or element as a children of a DOM element
+                if (typeof val === 'object' || typeof val === 'function') {
+                    var sobj = sandbox.getShadowObject(val);
+                    if (sobj) {
+                        sobj.isDOMElement = true;
+                    }
+                }
+            }
+            return {
+                result: val
+            };
+        };
+
         /*
         this.read = function(iid, name, val, isGlobal, isScriptLocal){return {result:val};};
 
         this.invokeFunPre = function(iid, f, base, args, isConstructor, isMethod){return {f:f,base:base,args:args,skip:false};};
-
-        
 
         this.forinObject = function(iid, val){return {result:val};};
 

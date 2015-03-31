@@ -34,6 +34,8 @@
 
     util.CONSOLE_LOG = console.log;
     util.RANDOM = Math.random;
+    util.DATE = Date;
+    util.NOW = Date.now;
     var SPECIAL_PROP = sandbox.Constants.SPECIAL_PROP + "M";
     var HOP = sandbox.Constants.HOP;
     var objectId = 1;
@@ -70,6 +72,16 @@
         return value;
     };
 
+    util.getFunName = function(f) {
+        if (f) {
+            var matchResult = f.toString().match(/function ([^(\s]*)/);
+            if (matchResult) {
+                return matchResult[1];
+            }
+        }
+        return '[unknown]';
+    }
+
     // return true if the parameter is a native function
     util.isNativeFun = function(f) {
         if (typeof f === 'function') {
@@ -79,22 +91,95 @@
             }
         }
         return false;
-    }
+    };
 
-    var funList = [Object, Array, Boolean, Number, RegExp, Date, 
-        Array.prototype.push, Array.prototype.pop, Array.prototype.slice, Array.prototype.join,
-        Array.prototype.shift, Array.prototype.unshift, Array.prototype.concat,
-        String.prototype.charCodeAt, parseInt, parseFloat, Math.max, Math.sin, Math.min, Math.pow, Math.floor,
-        Object.defineProperty, Math.abs, Math.cos, Math.sqrt, Math.round, isNaN,
-        String.fromCharCode, String.prototype.indexOf, String.prototype.charAt,
-        Float32Array, Uint8Array, Uint16Array, Uint32Array, Float64Array, Array.prototype.lastIndexOf, String.prototype.lastIndexOf,
-        String.prototype.substring, String.prototype.trim, Object.create, Object.prototype.hasOwnProperty,
-        Array.prototype.splice, Int8Array, Int16Array, Int32Array, String.prototype.replace,
-        String.prototype.toUpperCase, String.prototype.toLowerCase,
-        RegExp.prototype.exec, ArrayBuffer, Date.now, console.log, 
-        // Array.prototype.split, String.prototype.match, 
-        String.prototype.toLocaleUpperCase, String.prototype.toLocaleLowerCase,
-        JSON.stringify, JSON.parse
+    // check if a function is a DOM function
+    util.isDOMFun = function(f) {
+        if (typeof f === 'function') {
+            var str = f.toString();
+            if (str.indexOf('{ [native code] }') >= 0) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    util.isDOMElement = function(elem) {
+        if (elem && elem.constructor) {
+            var name = this.getFunName(elem.constructor);
+            if (name.indexOf('HTML') >= 0) {
+                return true;
+            } else if (name.indexOf('CSSStyleDeclaration') >= 0) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    var funList = [
+        // constructors
+        Object, Array,
+        Boolean, Number,
+        RegExp, Date,
+        JSON.stringify, JSON.parse,
+        parseInt, parseFloat, isNaN,
+        // RegExp methods
+        RegExp.prototype.test,
+        RegExp.prototype.exec,
+        // object methdos
+        Object.create,
+        Object.defineProperty,
+        Object.prototype.hasOwnProperty,
+        // array methods
+        Array.isArray,
+        Array.prototype.sort,
+        Array.prototype.slice,
+        Array.prototype.splice,
+        Array.prototype.lastIndexOf,
+        Array.prototype.push,
+        Array.prototype.pop,
+        Array.prototype.join,
+        Array.prototype.shift,
+        Array.prototype.unshift,
+        Array.prototype.concat,
+        // Math methods
+        Math.max, Math.min,
+        Math.sin, Math.cos,
+        Math.abs, Math.pow,
+        Math.sqrt, Math.round,
+        Math.floor,
+        // string methods
+        String.fromCharCode,
+        String.prototype.trim,
+        String.prototype.concat,
+        String.prototype.replace,
+        String.prototype.slice,
+        String.prototype.split,
+        String.prototype.match,
+        String.prototype.substring,
+        String.prototype.toLocaleUpperCase,
+        String.prototype.toLocaleLowerCase,
+        String.prototype.toUpperCase,
+        String.prototype.toLowerCase,
+        String.prototype.charAt,
+        String.prototype.indexOf,
+        String.prototype.lastIndexOf,
+        String.prototype.charCodeAt,
+        // Date methods
+        Date.now,
+        // console methods
+        console.log,
+        // typed array constructors
+        ArrayBuffer,
+        Int8Array,
+        Uint8Array,
+        Uint8ClampedArray,
+        Int16Array,
+        Uint16Array,
+        Int32Array,
+        Uint32Array,
+        Float32Array,
+        Float64Array
     ];
 
     util.isImportantNativeFun = function(f) {
@@ -104,7 +189,7 @@
             }
         }
         return this.isNativeFun(f);
-    }
+    };
 
     var prim = 1181;
 
@@ -120,7 +205,7 @@
 
     util.hash = function(obj) {
         return simpleHash(this.stringify(obj));
-    }
+    };
 
     // a stringify object that handles circular references
     util.stringify = function(obj) {

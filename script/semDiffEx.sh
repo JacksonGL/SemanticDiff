@@ -39,16 +39,19 @@ collect() {
 	# collect the trace of the original program	
 	echo "instrumenting program:" "$2".js
     node ../jalangi2/src/js/commands/esnstrument_cli.js --inlineIID "$2".js
-
 	echo "collecting trace for program:" "$2".js
-	( node src/js/commands/directdom.js --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js --instruCode "$2"_jalangi_.js --testScript "$2"_test.js "tests/existing/domTestDriver.js" ) >> orig_trace.txt
+	# rename the instrumented file so that the global state is consistent
+	cp "$2"_jalangi_.js "$2".run.js
+	( node src/js/commands/directStub.js --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_stub.js ) >> orig_trace.txt
+	rm "$2".run.js
 
 	# collect the trace of the minified program provided by the vendor
 	echo "instrumenting program:" "$2".js
-    node ../jalangi2/src/js/commands/esnstrument_cli.js --inlineIID "$2"_min.js
-
-	echo "collecting trace for program:" "$2"_min.js
-	( node src/js/commands/directdom.js --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js --instruCode "$2"_min_jalangi_.js --testScript "$2"_test.js "tests/existing/domTestDriver.js" ) >> min_trace.txt
+    node ../jalangi2/src/js/commands/esnstrument_cli.js --inlineIID "$2".min.js
+	echo "collecting trace for program:" "$2".min.js
+	# rename the instrumented file so that the global state is consistent
+	cp "$2".min_jalangi_.js "$2".run.js
+	( node src/js/commands/directStub.js --analysis ../jalangi2/src/js/sample_analyses/ChainedAnalysesNoCheck.js --analysis src/js/analyses/lib/Utils.js --analysis src/js/analyses/traceRecorder.js "$2"_stub.js ) >> min_trace.txt
 }
 
 # procedure that collect diff information among traces
@@ -71,13 +74,13 @@ save() {
 	mkdir tests/result/"$1"/min
 	# save original and minified source code
 	cp "$2".js tests/result/"$1"/orig/"$1".js
-	cp "$2"_min.js tests/result/"$1"/min/"$1"_min.js
+	cp "$2".min.js tests/result/"$1"/min/"$1".min.js
 	# save instrumented source code
 	mv "$2"_jalangi_.js tests/result/"$1"/orig/"$1"_jalangi_.js
-	mv "$2"_min_jalangi_.js tests/result/"$1"/min/"$1"_min_jalangi_.js
+	mv "$2".min_jalangi_.js tests/result/"$1"/min/"$1".min_jalangi_.js
 	# save instrumented source code sourcemap files
 	mv "$2"_jalangi_.json tests/result/"$1"/orig/"$1"_jalangi_.json
-	mv "$2"_min_jalangi_.json tests/result/"$1"/min/"$1"_min_jalangi_.json
+	mv "$2".min_jalangi_.json tests/result/"$1"/min/"$1".min_jalangi_.json
 	# save traces
 	mv ./orig_trace.txt tests/result/"$1"/orig/"$1"_trace.txt
 	mv ./min_trace.txt tests/result/"$1"/min/"$1"_min_trace.txt
@@ -119,6 +122,8 @@ clean
 jalangi_ver="";
 
 # jQuery 1.11.2
+runexp "template" "tests/existing/template/template"
 runexp "jQuery-1.11.2" "tests/existing/jquery/jquery-1.11.2"
+runexp "jQuery-UI" "tests/existing/jqueryUI/jquery-ui"
 
 echo 'done'
