@@ -33,6 +33,8 @@
     util = {};
 
     util.CONSOLE_LOG = console.log;
+    util.CONSOLE_ERROR = console.error;
+    util.console_INFO = console.info;
     util.RANDOM = Math.random;
     util.DATE = Date;
     util.NOW = Date.now;
@@ -147,7 +149,7 @@
         Math.sin, Math.cos,
         Math.abs, Math.pow,
         Math.sqrt, Math.round,
-        Math.floor,
+        Math.floor, Math.ceil,
         // string methods
         String.fromCharCode,
         String.prototype.trim,
@@ -167,8 +169,22 @@
         String.prototype.charCodeAt,
         // Date methods
         Date.now,
+        // date get methods
+        Date.prototype.getDate, Date.prototype.getDay,
+        Date.prototype.getFullYear, Date.prototype.getHours,
+        Date.prototype.getMilliseconds, Date.prototype.getMinutes,
+        Date.prototype.getMonth, Date.prototype.getSeconds,
+        Date.prototype.getTime,
+        // date set methods
+        Date.prototype.setDate, Date.prototype.setFullYear,
+        Date.prototype.setHours, Date.prototype.setMilliseconds,
+        Date.prototype.setMinutes, Date.prototype.setMonth,
+        Date.prototype.setSeconds, Date.prototype.setTime,
+        // Number methods
+        Number.prototype.toFixed,
         // console methods
         console.log,
+        Error,
         // typed array constructors
         ArrayBuffer,
         Int8Array,
@@ -188,15 +204,19 @@
                 return false;
             }
         }
+
+        if(this.getFunName(f) === 'toString') {
+            return false;
+        }
         return this.isNativeFun(f);
     };
 
-    var prim = 1181;
+    var prim = 1299827;
 
     function simpleHash(str) {
         str = str + '';
         var result = 0;
-        for (var i = 0; i < str.length; i += 11) {
+        for (var i = 0; i < str.length; i++) {
             result += str.charCodeAt(i);
             result %= prim;
         }
@@ -207,6 +227,7 @@
         return simpleHash(this.stringify(obj));
     };
 
+    var MAX_JSON_THRESHOLD = 200000;
     // a stringify object that handles circular references
     util.stringify = function(obj) {
         var objBuffer = [];
@@ -231,8 +252,15 @@
                 for (var i = 0; i < objBuffer.length; i++) {
                     if (objBuffer[i] === value) {
                         // circular
-                        return 'circular-' + i;
+                        var ret = 'circular-' + i;
+                        if(typeof value === 'function') {
+                            ret += ' ' + util.getFunName(value);
+                        }
+                        return ret;
                     }
+                }
+                if(objBuffer.length > MAX_JSON_THRESHOLD) {
+                    return '[skipped due to depth threshold]';
                 }
                 objBuffer.push(value);
             }

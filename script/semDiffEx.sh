@@ -122,8 +122,8 @@ clean
 jalangi_ver="";
 
 # jQuery 1.11.2
-runexp "template" "tests/existing/template/template"
+# runexp "template" "tests/existing/template/template"
 runexp "jQuery-1.11.2" "tests/existing/jquery/jquery-1.11.2"
-runexp "jQuery-UI" "tests/existing/jqueryUI/jquery-ui"
+# runexp "jQuery-UI" "tests/existing/jqueryUI/jquery-ui"
 
 echo 'done'

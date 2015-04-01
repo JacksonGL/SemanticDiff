@@ -31,28 +31,47 @@
 
 var jsdom = require('jsdom');
 var fs = require('fs');
+var qunit = require('qunit');
+
+var testcaseList = [
+      './unitTests/css.js',
+      './unitTests/traversing.js',
+      './unitTests/data.js',
+      './unitTests/callbacks.js',
+      './unitTests/deferred.js',
+      './unitTests/dimensions.js',
+      './unitTests/effects.js',
+      './unitTests/manipulation.js',
+      './unitTests/queue.js',
+      './unitTests/selector.js',
+      './unitTests/serialize.js',
+      './unitTests/support.js'
+]
 // setup a virtual DOM
 try {
     jsdom.env({
         html: fs.readFileSync('tests/existing/jquery/index.html'),
         done: function(errors, window2) {
             window = window2;
+            document = window.document;
 
             // import the script to be tested
             jQuery = $ = window.$ = window.jQuery = require('./jquery-1.11.2.run.js');
+            original$ = $;
+            originaljQuery = jQuery;
 
-            // test script start
-
-            $('body').append("<div class='testing'>Hello World</div>");
-            console.log($(".testing").text()); // outputs Hello World
-
-            function myFunction() {
-                $("#h01").attr("style", "color:red").html("Hello jQuery")
+            var testcase;
+            for (var i = 0; i < testcaseList.length; i++) {
+                console.log(testcaseList[i]);
+                testcase = require(testcaseList[i]).testcase;
+                console.log(testcase);
+                try {
+                    testcase();
+                } catch (ex) {
+                    console.log(ex)
+                    console.log(ex.stack);
+                }
             }
-            $(window.document).ready(myFunction);
-            console.log($('body')[0].innerHTML);
-
-            // test script end
         }
     });
 } catch (ex) {

@@ -15,9 +15,11 @@ https://github.com/Samsung/jalangi2
 ### Install some node.js packages:
 
 ```
+npm install promise
 npm install argparse
 npm install esotope
-npm install jsdom
+npm install jsdom@3.1.2
+npm install qunit
 npm install phantom
 npm install phantomjs -g
 ```

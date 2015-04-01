@@ -16,6 +16,10 @@
 
 // Author: Liang Gong
 
+/*
+  Trace analyser for advanced optimization
+*/
+
 // do not remove the following comment
 // JALANGI DO NOT INSTRUMENT
 
@@ -24,11 +28,10 @@
         var utils = sandbox.Utils;
 
         var objId = 1;
-        var randomValue = 1;
-        var fixedDateTick = 1000000000000;
+        var randomValue = 0.5;
 
         function setObjectId(val) {
-            if (typeof val === 'object' || typeof val === 'function') {
+            if(typeof val === 'object' || typeof val === 'function') {
                 var sobj = sandbox.getShadowObject(val);
                 // try to set obj Id
                 if (sobj) {
@@ -37,7 +40,7 @@
                         // check if id has been successfully set
                         sobj = sandbox.getShadowObject(val);
                         // if object id is not succesuflly set
-                        if (!(sobj && sobj.id === (objId - 1))) {
+                        if(!(sobj && sobj.id === (objId-1))) {
                             objId--;
                         }
                         return false;
@@ -51,28 +54,13 @@
             return sandbox.iidToLocation(sandbox.getGlobalIID(iid));
         }
 
-        var nativeFunSamplingCnt = 0;
-        var interval = 1;
-
         this.invokeFun = function(iid, f, base, args, result, isConstructor, isMethod) {
-            if (f === utils.CONSOLE_LOG || f === utils.CONSOLE_ERROR || f === utils.CONSOLE_INFO) {
+            if (f === utils.CONSOLE_LOG) {
                 console.log('CONSOLE_LOG: ' + args[0]);
             }
 
             if (f === utils.RANDOM) {
                 result = randomValue;
-                //randomValue *= 0.99;
-            }
-
-            if (f === utils.DATE) {
-                result = new Date();
-                result.setTime(fixedDateTick);
-                //fixedDateTick += 1000;
-            }
-
-            if (f === utils.NOW) {
-                result = fixedDateTick;
-                //fixedDateTick += 1000;
             }
 
             var set = true;
@@ -81,39 +69,7 @@
             }
             //if(!set)
             //console.log(getLocation(iid));
-
-            if (utils.isImportantNativeFun(f)) {
-                if (f === Function.apply || f === Function.call) {
-                    if (!utils.isImportantNativeFun(args[0]))
-                        return {
-                            result: result
-                        };
-                }
-                //if ((--interval) <= 0) {
-                //    nativeFunSamplingCnt++;
-                //    interval = (Math.pow(1.1, nativeFunSamplingCnt) | 0);
-                // sample the current function invocation
-                // and the current program global state
-                // console.log(getLocation(iid));
-                console.log('fun-name:' + utils.getFunName(f));
-                console.log('args:');
-                console.log(utils.hash(args));
-                console.log('result:');
-                console.log(utils.hash(result));
-                console.log('gs: ' + utils.hash(global));
-                //}
-            } else if (utils.isDOMElement(base)) {
-                console.log(utils.getFunName(base.constructor) + '.' + utils.getFunName(f));
-                // console.log(getLocation(iid));
-                console.log('args:');
-                console.log(utils.hash(args));
-                console.log('result:');
-                console.log(utils.hash(result));
-                console.log('gs: ' + utils.hash(global));
-            }
-            return {
-                result: result
-            };
+            return {result: result};
         };
 
         this.literal = function(iid, val, hasGetterSetter) {
@@ -150,24 +106,9 @@
             }
         }
 
-        //var sampleCnt = 5000;
-
         this.putField = function(iid, base, offset, val, isComputed, isOpAssign) {
-            //if (typeof val !== 'function') {
-            //    console.log('pf:' + offset + '=' + getVal(val));
-            //}
-            //if (sampleCnt-- <= 0)
-            //    console.log(utils.hash(global));
-            //console.log(global);
-            //if (sampleCnt <= 0) {
-            //    sampleCnt = 5000;
-            //}
-
-            if (utils.isDOMElement(base)) {
-                console.log('pf');
-                console.log(utils.getFunName(base.constructor));
-                console.log(offset);
-                console.log(utils.hash(val));
+            if (typeof val !== 'function') {
+                console.log('pf:' + offset + '=' + getVal(val));
             }
         };
 
@@ -175,36 +116,15 @@
             if (isGlobal) {
                 console.log('wg:' + name);
                 console.log('  v:' + getVal(val));
-                console.log(utils.hash(global));
-                //console.log(global);
             }
         };
-
-        function isMarkedDOMElement(elem) {
-            var sobj = sandbox.getShadowObject(elem);
-            if (sobj) {return sobj.isDOMElement;}
-            return false;
-        }
-
-        /*this.getField = function(iid, base, offset, val, isComputed, isOpAssign, isMethodCall) {
-            if (utils.isDOMElement(base)) {
-                // mark the object or element as a children of a DOM element
-                if (typeof val === 'object' || typeof val === 'function') {
-                    var sobj = sandbox.getShadowObject(val);
-                    if (sobj) {
-                        sobj.isDOMElement = true;
-                    }
-                }
-            }
-            return {
-                result: val
-            };
-        };*/
 
         /*
         this.read = function(iid, name, val, isGlobal, isScriptLocal){return {result:val};};
 
         this.invokeFunPre = function(iid, f, base, args, isConstructor, isMethod){return {f:f,base:base,args:args,skip:false};};
+
+        
 
         this.forinObject = function(iid, val){return {result:val};};
 
@@ -246,8 +166,6 @@
         */
 
         this.endExecution = function() {
-            //console.log(utils.hash(global));
-            console.log(utils.stringify(global));
             console.log('endE');
         };
 

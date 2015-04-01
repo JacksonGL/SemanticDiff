@@ -22,6 +22,7 @@
 /*global process */
 /*global J$ */
 
+var jsdom = require('jsdom');
 var argparse = require('argparse');
 var parser = new argparse.ArgumentParser({
     addHelp: true,
@@ -73,31 +74,42 @@ function runAnalysis(initParam) {
     }
 
     function startProgram() {
-        // hack process.argv for the child script
-        script = path.resolve(script);
-        var newArgs = [process.argv[0], script];
-
+        // get the location of the instrumented code
+        var script;
         if (args.instruCode) {
             args.instruCode.forEach(function(src) {
-                newArgs.push(path.resolve(src));
+                script = path.resolve(src);
             });
         }
-
+        // get the location of the test script
+        var testScript;
         if (args.testScript) {
             args.testScript.forEach(function(src) {
-                newArgs.push(path.resolve(src));
+                testScript = path.resolve(src);
             });
         }
 
-        newArgs = newArgs.concat(args.script_and_args);
-        process.argv = newArgs;
-        // this assumes that the endExecution() callback of the analysis
-        // does not make any asynchronous calls
-        process.on('exit', function() {
-            J$.endExecution();
-        });
-        var mod = require('module').Module;
-        mod.runMain(script, null, true);
+        // setup a virtual DOM
+        try {
+            jsdom.env({
+                html: "<html><body></body></html>",
+                scripts: [],
+                done: function(errors, window2) {
+                    if(errors) {
+                        console.log(errors);
+                    }
+                    window = window2;
+                    // import the instrumented code
+                    globalObj = require(script);
+                    // import the testing script
+                    require(testScript);
+                    // finally invoke the Jalangi callback
+                    J$.endExecution();
+                }
+            });
+        } catch (ex) {
+            console.log(ex);
+        }
     }
 
     if (J$.analysis && J$.analysis.onReady) {
