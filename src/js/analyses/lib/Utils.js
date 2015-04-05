@@ -150,6 +150,7 @@
         Math.abs, Math.pow,
         Math.sqrt, Math.round,
         Math.floor, Math.ceil,
+        Math.random,
         // string methods
         String.fromCharCode,
         String.prototype.trim,
@@ -227,7 +228,7 @@
         return simpleHash(this.stringify(obj));
     };
 
-    var MAX_JSON_THRESHOLD = 200000;
+    var MAX_JSON_THRESHOLD = 2000;
     // a stringify object that handles circular references
     util.stringify = function(obj) {
         var objBuffer = [];
@@ -248,7 +249,7 @@
             if (key === 'argv' && typeof value === 'object' && Array.isArray(value)) {
                 return '[argv skipped]';
             }
-            if (typeof value === 'object' || typeof value === 'function') {
+            if (typeof value === 'object') {
                 for (var i = 0; i < objBuffer.length; i++) {
                     if (objBuffer[i] === value) {
                         // circular
@@ -263,6 +264,9 @@
                     return '[skipped due to depth threshold]';
                 }
                 objBuffer.push(value);
+            }
+            if(typeof value === 'function') {
+                return '[function] ' + value.name;
             }
             return value;
         }

@@ -15,6 +15,8 @@ https://github.com/Samsung/jalangi2
 ### Install some node.js packages:
 
 ```
+npm install acorn
+npm install escodegen
 npm install promise
 npm install argparse
 npm install esotope
