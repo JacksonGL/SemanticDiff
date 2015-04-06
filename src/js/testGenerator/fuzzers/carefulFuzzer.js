@@ -15,11 +15,10 @@
  */
 
 // Author: Liang Gong
-// randomly moves statements
+// fuzzer that tries not to generate a program leading to a runtime exception
 
 
 (function () {
-	var bodyArray = [];
 	function fuzz(ast) {
 		// randomly finds two statements or expression that 
 		// has the same type and swap their locations
@@ -44,27 +43,11 @@
 				if(prop === 'body' && Array.isArray(node[prop])) {
 					var array = node[prop];
 					fuzzArray(array);
-					bodyArray.push(array);
 				}
 			}
 		}
 
-		fuzzBody();
 		return ast;
-	}
-
-	// fuzz statements across different bodies
-	function fuzzBody() {
-		for(var i=0;i<bodyArray.length * 2;i++) {
-			var idx1 = (Math.random() * bodyArray.length)|0;
-			var idx2 = (Math.random() * bodyArray.length)|0;
-			if(idx1 === idx2) continue;
-
-			var idx3 = (Math.random() * bodyArray[idx1].length)|0;
-			var idx4 = (Math.random() * bodyArray[idx2].length)|0;
-			if(bodyArray[idx1][idx3].type === 'ReturnStatement') continue;
-			insert(bodyArray[idx2], idx4, bodyArray[idx1][idx3]);
-		}
 	}
 
 	function fuzzArray(array) {
